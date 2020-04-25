@@ -1,18 +1,27 @@
 import re
+import bs4 as bs
 from urllib.parse import urlparse
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
+
 def extract_next_links(url, resp):
-    # Implementation requred.
+    print("\n" + url)
+    soup = bs.BeautifulSoup(resp.raw_content, 'html.parser')
+    links = soup.find_all('a', attrs={'href': '*'})
+    for link in links:
+        print(link)
     return list()
 
+
 def is_valid(url):
+    # TODO: add rules for valid url's
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+        if parsed.scheme not in {"http", "https"}:
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -25,5 +34,5 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
-        print ("TypeError for ", parsed)
+        print("TypeError for ", parsed)
         raise
