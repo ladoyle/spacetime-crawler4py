@@ -18,7 +18,7 @@ class Report:
         self.longest_page = new_longest_page
 
     def get_longest(self):
-        return self.longest_page
+        return self.longest_page[0]
 
     def update_common(self, new_words):
         for word, freq in new_words:
@@ -28,8 +28,27 @@ class Report:
                 self.common_words[word] = freq
 
     def get_common(self):
-        return self.common_words
+        fifty_words = sorted(self.common_words.items(),
+                             key=lambda x: x[:1],
+                             reverse=True)
+        if len(fifty_words) >= 50:
+            fifty_words = fifty_words[:50]
+        word_list = ''
+        i = 1
+        for word, freq in fifty_words:
+            word_list.join(f'\t{i}) {word} -> {freq}\n')
+            i += 1
+        return word_list
 
     def update_domains(self, domains):
         for domain, freq in domains:
             self.sub_domains[domain] = freq
+
+    def get_domains(self):
+        domains = sorted(self.sub_domains.items())
+        dom_list = ''
+        i = 1
+        for dom, freq in domains:
+            dom_list.join(f'\t{i}) {dom} -> {freq}\n')
+            i += 1
+        return dom_list
