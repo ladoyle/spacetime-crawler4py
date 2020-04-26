@@ -3,7 +3,7 @@ import bs4 as bs
 from urllib.parse import urlparse
 
 
-def scraper(url, resp, saved):
+def scraper(url, resp, saved, report):
     # TODO:
     # 1) check if longest page found so far
     # 2) if subdomain, get unique url count
