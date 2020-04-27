@@ -1,4 +1,6 @@
 import re
+import sys
+
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
@@ -7,10 +9,10 @@ def scraper(url, resp, saved, report):
     # only process OK responses
     if resp.status == 200:
         length = page_length(resp, report)
-        if length > report.get_longest():
-            report.update_longest(length)
-        elif length == 0:
+        if length < 0:
             return list()
+        elif length > report.get_longest():
+            report.update_longest(length)
         # pull all valid links in page
         links = extract_next_links(url, resp, saved, report)
         return [link for link in links]
@@ -37,19 +39,23 @@ def page_length(resp, report):
 def tokenize(data):
     # create a set of stopwords from file
     stopwords = set()
-    with open('stopwords.txt') as stopwords_file:
-        while True:
-            word = stopwords_file.readline()
-            if not word:
-                break
-            stopwords.add(word.strip())
-    # create a list of tokenized words from page content
-    page_words = []
-    for word in re.split(r'\W+', data):
-        if word.isalnum() and len(word) > 1:
-            page_words.append(word.lower())
-    # return a list of words that are in page_words but not the stopwords
-    return [word for word in page_words if word not in stopwords]
+    try:
+        with open('stopwords.txt') as stopwords_file:
+            while True:
+                word = stopwords_file.readline()
+                if not word:
+                    break
+                stopwords.add(word.strip())
+        # create a list of tokenized words from page content
+        page_words = []
+        for word in re.split(r'\W+', data):
+            if word.isalnum() and len(word) > 1:
+                page_words.append(word.lower())
+        # return a list of words that are in page_words but not the stopwords
+        return [word for word in page_words if word not in stopwords]
+    except FileNotFoundError:
+        print('Error opening stopwords.txt!!', file=sys.stderr)
+        return list()
 
 
 def compute_word_frequency(words):
@@ -67,22 +73,27 @@ def extract_next_links(url, resp, saved, report):
     # use beautifulSoup to parse the html content
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     # extract all a tags
-    links = soup.find_all('a')
+    tags = soup.find_all('a')
     valid_links = []
-    for link in links:
-        if is_valid(link.get('href'), saved):
+    for tag in tags:
+        link = tag.get('href')
+        if is_valid(link, saved):
             # create a list of only valid links
-            valid_links.append(link)
+            valid_links.append(defrag(link))
     # check if this url is a sub-domain of ics.uci.edu
     check_sub_domain(url, report, len(valid_links))
     return valid_links
 
 
+def defrag(link):
+    parsed = urlparse(link)
+    return f'{parsed.scheme}://{parsed.netloc}/{parsed.path}'
+
+
 def check_sub_domain(url, report, num_links):
-    # TODO:
-    # 1) check if url is a sub-domain of ics.uci.edu
-    # 2) if yes add to the report with num_links
-    pass
+    parsed = urlparse(url)
+    if re.match(r".+\.ics\.uci\.edu", parsed.netloc):
+        report.update_domains({url: num_links})
 
 
 def is_valid(url, saved):
@@ -105,5 +116,5 @@ def is_valid(url, saved):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
     except TypeError:
-        print("TypeError for ", parsed)
+        print("TypeError for ", url)
         raise
