@@ -4,17 +4,24 @@ import sys
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
+from utils import get_urlhash
+
 
 def scraper(url, resp, saved, report):
     # only process OK responses
     if resp.status == 200:
         length = page_length(resp, report)
-        if length < 0:
+        # if no data, return empty
+        if length < 20:
             return list()
-        elif length > report.get_longest():
-            report.update_longest(length)
+        elif length > report.longest_page[1]:
+            report.update_longest((url, length))
         # pull all valid links in page
         links = extract_next_links(url, resp, saved, report)
+        # if len(report.sub_domains) == 0:
+        #     return [link for link in links]
+        # else:
+        #     return list()
         return [link for link in links]
     else:
         return list()
@@ -22,7 +29,7 @@ def scraper(url, resp, saved, report):
 
 def page_length(resp, report):
     # TODO:
-    # 1) check page similarity by stats analysis
+    # 1) check page similarity by simhash
 
     # get only the text from the html response
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
@@ -80,6 +87,8 @@ def extract_next_links(url, resp, saved, report):
         if is_valid(link, saved):
             # create a list of only valid links
             valid_links.append(defrag(link))
+    # update the number of unique pages
+    report.update_unique(len(valid_links))
     # check if this url is a sub-domain of ics.uci.edu
     check_sub_domain(url, report, len(valid_links))
     return valid_links
@@ -92,29 +101,41 @@ def defrag(link):
 
 def check_sub_domain(url, report, num_links):
     parsed = urlparse(url)
-    if re.match(r".+\.ics\.uci\.edu", parsed.netloc):
+    if re.match(r".+\.ics\.uci\.edu", parsed.netloc):  # and not re.match(r"www\.ics\.uci\.edu", parsed.netloc):
         report.update_domains({url: num_links})
 
 
 def is_valid(url, saved):
-    # TODO: add rules for valid url's
-    # 1) url not valid if in saved
-    # - defrag before checking if in saved
-    # 2) update unique url count in report
-    # 3) not valid if not a in the seed domains
     try:
+        url = defrag(url)
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
             return False
-        return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+        elif saved.get(get_urlhash(url)):
+            return False
+        elif not re.match(
+                r".*(ics\.uci\.edu"
+                + r"|cs\.uci\.edu"
+                + r"|informatics\.uci\.edu"
+                + r"|stat\.uci\.edu"
+                + r"|today\.uci\.edu)", parsed.netloc):
+            return False
+        elif re.match(
+                r".*\.(css|js|php|bmp|gif|jpe?g|ico"
+                + r"|png|tiff?|mid|mp2|mp3|mp4"
+                + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+                + r"|ps|eps|tex|ppt|pptx|ppsx|diff|doc|docx|xls|xlsx|names"
+                + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+                + r"|epub|dll|cnf|tgz|sha1"
+                + r"|thmx|mso|arff|rtf|jar|csv"
+                + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
+            return False
+        else:
+            if re.match(r"today\.uci\.edu", parsed.netloc) and not re.match(r"department"
+                                                                            r"/information_computer_sciences/*",
+                                                                            parsed.path):
+                return False
+            return True
     except TypeError:
         print("TypeError for ", url)
         raise
