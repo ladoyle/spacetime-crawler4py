@@ -1,4 +1,5 @@
 """ class added for automatic report generation """
+from crawler.hasher import SimHash
 
 
 class Report:
@@ -7,6 +8,7 @@ class Report:
         self.longest_page = ('', 0)
         self.common_words = dict()
         self.sub_domains = dict()
+        self.simhash = SimHash()
 
     def update_unique(self, num_pages):
         self.unique_pages += num_pages
@@ -36,7 +38,7 @@ class Report:
         word_list = ''
         i = 1
         for word, freq in fifty_words:
-            word_list.join(f'\t{i}) {word} -> {freq}\n')
+            word_list += f'\t{i}) {word} -> {freq}\n'
             i += 1
         return word_list
 
@@ -49,6 +51,6 @@ class Report:
         dom_list = ''
         i = 1
         for dom, freq in domains:
-            dom_list.join(f'\t{i}) {dom} -> {freq}\n')
+            dom_list += f'\t{i}) {dom} -> {freq}\n'
             i += 1
         return dom_list

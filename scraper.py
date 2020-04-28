@@ -12,25 +12,18 @@ def scraper(url, resp, saved, report):
     if resp.status == 200:
         length = page_length(resp, report)
         # if no data, return empty
-        if length < 20:
+        if length == 0:
             return list()
         elif length > report.longest_page[1]:
             report.update_longest((url, length))
         # pull all valid links in page
         links = extract_next_links(url, resp, saved, report)
-        # if len(report.sub_domains) == 0:
-        #     return [link for link in links]
-        # else:
-        #     return list()
         return [link for link in links]
     else:
         return list()
 
 
 def page_length(resp, report):
-    # TODO:
-    # 1) check page similarity by simhash
-
     # get only the text from the html response
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     data = soup.get_text()
@@ -38,9 +31,20 @@ def page_length(resp, report):
     words = tokenize(data)
     # store word frequencies
     frequency_map = compute_word_frequency(words)
-    report.update_common(frequency_map)
-    # return word count as page_length
-    return len(frequency_map)
+    if len(frequency_map) < 20:
+        return 0
+    # check page similarity with simhash
+    hasher = report.simhash
+    fingerprint = hasher.create_fingerprint(frequency_map)
+    similarity = hasher.calculate_similarity(fingerprint)
+    if similarity > 0.85:
+        # don't scrape url's -> near duplicate or low content
+        return 0
+    else:
+        report.update_common(frequency_map)
+        hasher.save_fingerprint(fingerprint)
+        # return word count as page_length
+        return len(frequency_map)
 
 
 def tokenize(data):
