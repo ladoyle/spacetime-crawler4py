@@ -17,8 +17,7 @@ def scraper(url, resp, saved, report):
         elif length > report.longest_page[1]:
             report.update_longest((url, length))
         # pull all valid links in page
-        links = extract_next_links(url, resp, saved, report)
-        return [link for link in links]
+        return extract_next_links(url, resp, saved, report)
     else:
         return list()
 
@@ -31,20 +30,22 @@ def page_length(resp, report):
     words = tokenize(data)
     # store word frequencies
     frequency_map = compute_word_frequency(words)
-    if len(frequency_map) < 20:
+    if len(frequency_map) < 25:
+        # don't scrape url's -> low content
         return 0
     # check page similarity with simhash
     hasher = report.simhash
     fingerprint = hasher.create_fingerprint(frequency_map)
     similarity = hasher.calculate_similarity(fingerprint)
-    if similarity > 0.85:
-        # don't scrape url's -> near duplicate or low content
-        return 0
-    else:
-        report.update_common(frequency_map)
-        hasher.save_fingerprint(fingerprint)
-        # return word count as page_length
-        return len(frequency_map)
+    print(f'\n{similarity}\n{fingerprint}\n')
+    # if similarity > 0.99:
+    #     # don't scrape url's -> near duplicate
+    #     return 0
+    # else:
+    report.update_common(frequency_map)
+    hasher.save_fingerprint(fingerprint)
+    # return word count as page_length
+    return len(frequency_map)
 
 
 def tokenize(data):
@@ -105,7 +106,7 @@ def defrag(link):
 
 def check_sub_domain(url, report, num_links):
     parsed = urlparse(url)
-    if re.match(r".+\.ics\.uci\.edu", parsed.netloc):  # and not re.match(r"www\.ics\.uci\.edu", parsed.netloc):
+    if re.match(r".+\.ics\.uci\.edu", parsed.netloc) and not re.match(r"www\.ics\.uci\.edu", parsed.netloc):
         report.update_domains({url: num_links})
 
 
