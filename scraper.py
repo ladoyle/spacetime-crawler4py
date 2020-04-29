@@ -9,7 +9,7 @@ from utils import get_urlhash
 
 def scraper(url, resp, saved, report):
     # only process OK responses
-    if resp.status == 200:
+    if resp.status in {200, 201, 202, 302}:
         length = page_length(resp, report)
         # if no data, return empty
         if length == 0:
