@@ -37,13 +37,13 @@ class SimHash:
         return fingerprint
 
     def calculate_similarity(self, new_hash):
-        # calculate the similarity of each page from the previous fingerprints
-        similarity = 0
+        # calculate the distance of each page from the previous fingerprints
+        distance = 1.0
         for fingerprint in self.fingerprints:
-            similarity = max(similarity, self.hamming_distance(fingerprint, new_hash))
-            if similarity > 0.90:
-                return similarity
-        return similarity
+            distance = min(distance, self.hamming_distance(fingerprint, new_hash))
+            if distance < 0.10:
+                return distance
+        return distance
 
     @staticmethod
     def hamming_distance(fingerprint, new_hash):

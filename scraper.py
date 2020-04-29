@@ -38,7 +38,7 @@ def page_length(resp, report):
     fingerprint = hasher.create_fingerprint(frequency_map)
     similarity = hasher.calculate_similarity(fingerprint)
     print(f'\n{similarity}\n{fingerprint}\n')
-    # if similarity > 0.99:
+    # if similarity < 0.10:
     #     # don't scrape url's -> near duplicate
     #     return 0
     # else:
