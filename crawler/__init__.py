@@ -24,6 +24,7 @@ class Crawler(object):
     def start(self):
         self.start_async()
         self.join()
+        self.report.generate_report()
 
     def join(self):
         for worker in self.workers:

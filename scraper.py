@@ -8,18 +8,19 @@ from utils import get_urlhash
 
 
 def scraper(url, resp, saved, report):
+    links = []
     # only process OK responses
     if resp.status in {200, 201, 202, 302}:
         length = page_length(resp, report)
         # if no data, return empty
         if length == 0:
-            return list()
+            return links
         elif length > report.longest_page[1]:
             report.update_longest((url, length))
         # pull all valid links in page
         return extract_next_links(url, resp, saved, report)
     else:
-        return list()
+        return links
 
 
 def page_length(resp, report):
@@ -37,15 +38,14 @@ def page_length(resp, report):
     hasher = report.simhash
     fingerprint = hasher.create_fingerprint(frequency_map)
     similarity = hasher.calculate_similarity(fingerprint)
-    print(f'\n{similarity}\n{fingerprint}\n')
-    # if similarity < 0.10:
-    #     # don't scrape url's -> near duplicate
-    #     return 0
-    # else:
-    report.update_common(frequency_map)
-    hasher.save_fingerprint(fingerprint)
-    # return word count as page_length
-    return len(frequency_map)
+    if similarity < 0.10:
+        # don't scrape url's -> near duplicate
+        return 0
+    else:
+        report.update_common(frequency_map)
+        hasher.save_fingerprint(fingerprint)
+        # return word count as page_length
+        return len(frequency_map)
 
 
 def tokenize(data):
@@ -106,7 +106,7 @@ def defrag(link):
 
 def check_sub_domain(url, report, num_links):
     parsed = urlparse(url)
-    if re.match(r".+\.ics\.uci\.edu", parsed.netloc) and not re.match(r"www\.ics\.uci\.edu", parsed.netloc):
+    if re.match(r".+\.ics\.uci\.edu", parsed.netloc) and "www.ics.uci.edu" != parsed.netloc:
         report.update_domains({url: num_links})
 
 
@@ -126,7 +126,7 @@ def is_valid(url, saved):
                 + r"|today\.uci\.edu)", parsed.netloc):
             return False
         elif re.match(
-                r".*\.(css|js|php|bmp|gif|jpe?g|ico"
+                r".*\.(css|js|bmp|gif|jpe?g|ico"
                 + r"|png|tiff?|mid|mp2|mp3|mp4"
                 + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
                 + r"|ps|eps|tex|ppt|pptx|ppsx|diff|doc|docx|xls|xlsx|names"

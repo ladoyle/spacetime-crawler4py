@@ -10,6 +10,7 @@ from scraper import is_valid
 
 class Frontier(object):
     def __init__(self, config, restart):
+        self.lock = RLock()
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = list()
@@ -50,19 +51,25 @@ class Frontier(object):
 
     def get_tbd_url(self):
         try:
-            return self.to_be_downloaded.pop()
+            self.lock.acquire()
+            url = self.to_be_downloaded.pop()
+            self.lock.release()
+            return url
         except IndexError:
             return None
 
     def add_url(self, url):
+        self.lock.acquire()
         url = normalize(url)
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
             self.save[urlhash] = (url, False)
             self.save.sync()
             self.to_be_downloaded.append(url)
+        self.lock.release()
 
     def mark_url_complete(self, url):
+        self.lock.acquire()
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
             # This should not happen.
@@ -71,3 +78,4 @@ class Frontier(object):
 
         self.save[urlhash] = (url, True)
         self.save.sync()
+        self.lock.release()
