@@ -1,3 +1,4 @@
+import time
 from threading import Thread
 
 from utils.download import download
@@ -19,9 +20,8 @@ class Worker(Thread):
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler")
                 break
-            self.report.check_is_recent(tbd_url, self.config.time_delay)
+            self.report.lock_domain(tbd_url)
             resp = download(tbd_url, self.config, self.logger)
-            self.report.update_recent_time(tbd_url)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
@@ -30,3 +30,5 @@ class Worker(Thread):
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
+            time.sleep(self.config.time_delay)
+            self.report.release_domain(tbd_url)

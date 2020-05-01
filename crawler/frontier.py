@@ -1,7 +1,7 @@
 import os
 import shelve
 
-from threading import Thread, RLock
+from threading import RLock
 from queue import Queue, Empty
 
 from utils import get_logger, get_urlhash, normalize
