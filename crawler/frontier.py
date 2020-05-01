@@ -13,7 +13,7 @@ class Frontier(object):
         self.lock = RLock()
         self.logger = get_logger("FRONTIER")
         self.config = config
-        self.to_be_downloaded = list()
+        self.to_be_downloaded = Queue()
 
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -42,8 +42,8 @@ class Frontier(object):
         total_count = len(self.save)
         tbd_count = 0
         for url, completed in self.save.values():
-            if not completed and is_valid(url):
-                self.to_be_downloaded.append(url)
+            if not completed and is_valid(url, self.save):
+                self.to_be_downloaded.put(url)
                 tbd_count += 1
         self.logger.info(
             f"Found {tbd_count} urls to be downloaded from {total_count} "
@@ -51,31 +51,28 @@ class Frontier(object):
 
     def get_tbd_url(self):
         try:
-            self.lock.acquire()
-            url = self.to_be_downloaded.pop()
-            self.lock.release()
-            return url
-        except IndexError:
+            return self.to_be_downloaded.get(block=True, timeout=3)
+        except Empty:
             return None
 
     def add_url(self, url):
-        self.lock.acquire()
         url = normalize(url)
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
+            self.lock.acquire()
             self.save[urlhash] = (url, False)
             self.save.sync()
-            self.to_be_downloaded.append(url)
-        self.lock.release()
+            self.lock.release()
+            self.to_be_downloaded.put(url)
 
     def mark_url_complete(self, url):
-        self.lock.acquire()
+        self.to_be_downloaded.task_done()
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
             # This should not happen.
             self.logger.error(
                 f"Completed url {url}, but have not seen it before.")
-
+        self.lock.acquire()
         self.save[urlhash] = (url, True)
         self.save.sync()
         self.lock.release()

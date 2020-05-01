@@ -6,8 +6,8 @@ from threading import RLock
 from crawler.hasher import SimHash
 
 
-def to_seconds(full_time):
-    return 3600*full_time.tm_hour + 60*full_time.tm_min + full_time.tm_sec
+def to_milli(full_time):
+    return int(round(full_time * 1000))
 
 
 class Report:
@@ -19,13 +19,12 @@ class Report:
         self.common_words = dict()
         self.sub_domains = dict()
 
-        current_time = to_seconds(time.localtime())
         self.domain_times = {
-            'ics.uci.edu': current_time,
-            'cs.uci.edu': current_time,
-            'informatics.uci.edu': current_time,
-            'stat.uci.edu': current_time,
-            'today.uci.edu': current_time
+            'ics.uci.edu': 0,
+            'cs.uci.edu': 0,
+            'informatics.uci.edu': 0,
+            'stat.uci.edu': 0,
+            'today.uci.edu': 0
         }
 
     def update_unique(self, num_pages):
@@ -81,19 +80,20 @@ class Report:
             i += 1
         return dom_list
 
-    def check_is_recent(self, url, current_time):
-        time_seconds = to_seconds(current_time)
+    def check_is_recent(self, url, delay):
+        self.lock.acquire()
+        time_millisecs = to_milli(time.time())
         for domain in self.domain_times:
-            recent = time_seconds - self.domain_times[domain]
-            if url.find(domain) != -1 and recent < 0.5:
-                return True
-        return False
+            recent = time_millisecs - self.domain_times[domain]
+            if url.find(domain) != -1 and recent < 500:
+                time.sleep(delay)
+        self.lock.release()
 
     def update_recent_time(self, url):
         self.lock.acquire()
         for domain in self.domain_times:
             if url.find(domain) != -1:
-                self.domain_times[domain] = to_seconds(time.localtime())
+                self.domain_times[domain] = to_milli(time.time())
                 break
         self.lock.release()
 

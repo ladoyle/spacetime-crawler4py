@@ -3,7 +3,6 @@ from threading import Thread
 from utils.download import download
 from utils import get_logger
 from scraper import scraper
-import time
 
 
 class Worker(Thread):
@@ -18,11 +17,9 @@ class Worker(Thread):
         while True:
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
+                self.logger.info("Frontier is empty. Stopping Crawler")
                 break
-            current_time = time.localtime()
-            if self.report.check_is_recent(tbd_url, current_time):
-                time.sleep(self.config.time_delay)
+            self.report.check_is_recent(tbd_url, self.config.time_delay)
             resp = download(tbd_url, self.config, self.logger)
             self.report.update_recent_time(tbd_url)
             self.logger.info(

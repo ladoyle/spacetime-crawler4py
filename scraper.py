@@ -10,7 +10,7 @@ from utils import get_urlhash
 def scraper(url, resp, saved, report):
     links = []
     # only process OK responses
-    if resp.status in {200, 201, 202, 302}:
+    if resp.status in {200, 201, 202, 302} and resp.raw_response:
         length = page_length(resp, report)
         # if no data, return empty
         if length == 0:
@@ -119,11 +119,12 @@ def is_valid(url, saved):
         elif saved.get(get_urlhash(url)):
             return False
         elif not re.match(
-                r".*(ics\.uci\.edu"
-                + r"|cs\.uci\.edu"
-                + r"|informatics\.uci\.edu"
-                + r"|stat\.uci\.edu"
-                + r"|today\.uci\.edu)", parsed.netloc):
+                r".*(\.ics"
+                + r"|\.cs"
+                + r"|\.informatics"
+                + r"|\.stat"
+                + r"|today)"
+                  r"\.uci\.edu", parsed.netloc):
             return False
         elif re.match(
                 r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -136,7 +137,7 @@ def is_valid(url, saved):
                 + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
             return False
         else:
-            if re.match(r"today\.uci\.edu", parsed.netloc) and not re.match(r"department"
+            if re.match(r"today\.uci\.edu", parsed.netloc) and not re.match(r"//department"
                                                                             r"/information_computer_sciences/*",
                                                                             parsed.path):
                 return False
