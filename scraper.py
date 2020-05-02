@@ -54,13 +54,15 @@ def tokenize(data):
     try:
         with open('stopwords.txt') as stopwords_file:
             while True:
-                word = stopwords_file.readline()
-                if not word:
+                line = stopwords_file.readline()
+                if not line:
                     break
-                stopwords.add(word.strip())
+                stopwords.add(line.strip())
         # create a list of tokenized words from page content
         page_words = []
         for word in re.split(r'\W+', data):
+            if type(word) is bytes:
+                word = word.encode('utf-8')
             if word.isalnum() and len(word) > 1:
                 page_words.append(word.lower())
         # return a list of words that are in page_words but not the stopwords
