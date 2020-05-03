@@ -98,9 +98,9 @@ class Report:
             domains = self.get_domains()
             with open("hw2_report.txt", 'w') as report_file:
                 report_file.write('Unique pages found:\t' + str(self.unique_pages) + '\n'
-                                  'Longest page by words:\t' + str(self.longest_page[0]) +
+                                  'Longest page by words:\t' + str(self.longest_page[0]).encode('utf-8') +
                                   ' ' + str(self.longest_page[1]) + '\f'
                                   '50 most common words:\n' + str(common_words) + '\f'
-                                  'Sub-domains for ics.uci.edu:\n' + str(domains))
+                                  'Sub-domains for ics.uci.edu:\n' + str(domains).encode('utf-8'))
         except IOError:
             print("Report Error: could not write to hw2_report.txt file", file=sys.stderr)
