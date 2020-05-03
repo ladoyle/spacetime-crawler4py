@@ -27,6 +27,5 @@ class Crawler(object):
         self.report.generate_report()
 
     def join(self):
-        self.frontier.to_be_downloaded.join()
         for worker in self.workers:
             worker.join()

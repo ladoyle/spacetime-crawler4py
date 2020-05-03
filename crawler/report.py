@@ -97,9 +97,10 @@ class Report:
             common_words = self.get_common()
             domains = self.get_domains()
             with open("hw2_report.txt", 'w') as report_file:
-                report_file.write(f'Unique pages found:\t{self.unique_pages}\n'
-                                  f'Longest page by words:\t{self.longest_page[0]} {self.longest_page[1]}\f'
-                                  f'50 most common words:\n{common_words}\f'
-                                  f'Sub-domains for ics.uci.edu:\n{domains}')
+                report_file.write('Unique pages found:\t' + str(self.unique_pages) + '\n'
+                                  'Longest page by words:\t' + str(self.longest_page[0]) +
+                                  ' ' + str(self.longest_page[1]) + '\f'
+                                  '50 most common words:\n' + str(common_words) + '\f'
+                                  'Sub-domains for ics.uci.edu:\n' + str(domains))
         except IOError:
             print("Report Error: could not write to hw2_report.txt file", file=sys.stderr)
