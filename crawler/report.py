@@ -39,6 +39,9 @@ class Report:
         self.longest_page = new_longest_page
         self.lock_report.release()
 
+    def get_longest(self):
+        return str(self.longest_page[0]) + " " + str(self.longest_page[1])
+
     def update_common(self, new_words):
         self.lock_report.acquire()
         for word in new_words:
@@ -54,10 +57,12 @@ class Report:
                              reverse=True)
         if len(fifty_words) >= 50:
             fifty_words = fifty_words[:50]
-        word_list = ''
+        word_list = ""
         i = 1
         for word, freq in fifty_words:
-            word_list += f'\t{i}) {word} -> {freq}\n'
+            if type(word) is bytes:
+                word = word.decode()
+            word_list += f"\t{i}) {word} -> {freq}\n"
             i += 1
         return word_list
 
@@ -69,10 +74,12 @@ class Report:
 
     def get_domains(self):
         domains = sorted(self.sub_domains.items())
-        dom_list = ''
+        dom_list = ""
         i = 1
         for dom, freq in domains:
-            dom_list += f'\t{i}) {dom} -> {freq}\n'
+            if type(dom) is bytes:
+                dom = dom.decode()
+            dom_list += f"\t{i}) {dom} -> {freq}\n"
             i += 1
         return dom_list
 
@@ -94,13 +101,13 @@ class Report:
 
     def generate_report(self):
         try:
+            page = self.get_longest()
             common_words = self.get_common()
             domains = self.get_domains()
             with open("hw2_report.txt", 'w') as report_file:
-                report_file.write('Unique pages found:\t' + str(self.unique_pages) + '\n'
-                                  'Longest page by words:\t' + str(self.longest_page[0]).encode('utf-8') +
-                                  ' ' + str(self.longest_page[1]) + '\f'
-                                  '50 most common words:\n' + str(common_words) + '\f'
-                                  'Sub-domains for ics.uci.edu:\n' + str(domains).encode('utf-8'))
+                report_file.write("Unique pages found:\t" + str(self.unique_pages) + "\n"
+                                  "Longest page by words:\t" + page + "\n\n\n"
+                                  "50 most common words:\n" + common_words + "\n\n\n"
+                                  "Sub-domains for ics.uci.edu:\n" + domains)
         except IOError:
             print("Report Error: could not write to hw2_report.txt file", file=sys.stderr)
