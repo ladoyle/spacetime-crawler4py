@@ -39,9 +39,6 @@ class Report:
         self.longest_page = new_longest_page
         self.lock_report.release()
 
-    def get_longest(self):
-        return str(self.longest_page[0]) + " " + str(self.longest_page[1])
-
     def update_common(self, new_words):
         self.lock_report.acquire()
         for word in new_words:
@@ -51,20 +48,20 @@ class Report:
                 self.common_words[word] = new_words[word]
         self.lock_report.release()
 
-    def get_common(self):
+    def write_common_words(self, file):
         fifty_words = sorted(self.common_words.items(),
                              key=lambda x: x[:1],
                              reverse=True)
         if len(fifty_words) >= 50:
             fifty_words = fifty_words[:50]
-        word_list = ""
         i = 1
+        file.write("50 most common words:\n")
         for word, freq in fifty_words:
             if type(word) is bytes:
                 word = word.decode()
-            word_list += f"\t{i}) {word} -> {freq}\n"
+            file.write("\t{}) {} -> {}\n".format(i, word, freq))
             i += 1
-        return word_list
+        file.write("\n\n\n")
 
     def update_domains(self, domains):
         self.lock_report.acquire()
@@ -72,16 +69,15 @@ class Report:
             self.sub_domains[domain] = domains[domain]
         self.lock_report.release()
 
-    def get_domains(self):
+    def write_domains(self, file):
         domains = sorted(self.sub_domains.items())
-        dom_list = ""
         i = 1
+        file.write("Sub-domains for ics.uci.edu:\n")
         for dom, freq in domains:
             if type(dom) is bytes:
                 dom = dom.decode()
-            dom_list += f"\t{i}) {dom} -> {freq}\n"
+            file.write("\t{}) {} -> {}\n".format(i, dom, freq))
             i += 1
-        return dom_list
 
     def lock_domain(self, url):
         i = 0
@@ -101,13 +97,12 @@ class Report:
 
     def generate_report(self):
         try:
-            page = self.get_longest()
-            common_words = self.get_common()
-            domains = self.get_domains()
             with open("hw2_report.txt", 'w') as report_file:
-                report_file.write("Unique pages found:\t" + str(self.unique_pages) + "\n"
-                                  "Longest page by words:\t" + page + "\n\n\n"
-                                  "50 most common words:\n" + common_words + "\n\n\n"
-                                  "Sub-domains for ics.uci.edu:\n" + domains)
+                report_file.write("Unique pages found:\t" + str(self.unique_pages) + "\n")
+                report_file.write("Longest page by words:\n\t"
+                                  + str(self.longest_page[0]) + "\n\t" + str(self.longest_page[1])
+                                  + "\n\n\n")
+                self.write_common_words(report_file)
+                self.write_domains(report_file)
         except IOError:
             print("Report Error: could not write to hw2_report.txt file", file=sys.stderr)
