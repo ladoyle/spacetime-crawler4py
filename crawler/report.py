@@ -59,7 +59,7 @@ class Report:
         for word, freq in fifty_words:
             if type(word) is bytes:
                 word = word.decode()
-            file.write("\t{}) {} -> {}\n".format(i, word, freq))
+            file.write("\t" + str(i) + ") " + str(word) + " -> " + str(freq) + "\n")
             i += 1
         file.write("\n\n\n")
 
@@ -76,7 +76,7 @@ class Report:
         for dom, freq in domains:
             if type(dom) is bytes:
                 dom = dom.decode()
-            file.write("\t{}) {} -> {}\n".format(i, dom, freq))
+            file.write("\t" + str(i) + ") " + str(dom) + " -> " + str(freq) + "\n")
             i += 1
 
     def lock_domain(self, url):
