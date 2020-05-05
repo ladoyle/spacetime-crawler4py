@@ -50,7 +50,7 @@ class Report:
 
     def write_common_words(self, file):
         fifty_words = sorted(self.common_words.items(),
-                             key=lambda x: x[:1],
+                             key=lambda x: x[1],
                              reverse=True)
         if len(fifty_words) >= 50:
             fifty_words = fifty_words[:50]
@@ -61,10 +61,12 @@ class Report:
             i += 1
         file.write("\n\n\n")
 
-    def update_domains(self, domains):
+    def update_domains(self, domain):
         self.lock_report.acquire()
-        for domain in domains:
-            self.sub_domains[domain] = domains[domain]
+        if self.sub_domains.get(domain[0]):
+            self.sub_domains[domain[0]] += domain[1]
+        else:
+            self.sub_domains[domain[0]] = domain[1]
         self.lock_report.release()
 
     def write_domains(self, file):

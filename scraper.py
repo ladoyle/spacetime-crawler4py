@@ -109,7 +109,7 @@ def defrag(link):
 def check_sub_domain(url, report, num_links):
     parsed = urlparse(url)
     if re.match(r".+\.ics\.uci\.edu", parsed.netloc) and "www.ics.uci.edu" != parsed.netloc:
-        report.update_domains({url: num_links})
+        report.update_domains([parsed.netloc, num_links])
 
 
 def is_valid(url, saved):
