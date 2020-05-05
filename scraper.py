@@ -61,10 +61,10 @@ def tokenize(data):
         # create a list of tokenized words from page content
         page_words = []
         for word in re.split(r'\W+', data):
-            if type(word) is bytes:
+            if type(word) is str:
                 word = word.encode('utf-8')
             if word.isalnum() and len(word) > 1:
-                page_words.append(word.lower())
+                page_words.append(word.decode('utf-8').lower())
         # return a list of words that are in page_words but not the stopwords
         return [word for word in page_words if word not in stopwords]
     except FileNotFoundError:

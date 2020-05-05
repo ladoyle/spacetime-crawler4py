@@ -57,8 +57,6 @@ class Report:
         i = 1
         file.write("50 most common words:\n")
         for word, freq in fifty_words:
-            if type(word) is bytes:
-                word = word.decode()
             file.write("\t" + str(i) + ") " + str(word) + " -> " + str(freq) + "\n")
             i += 1
         file.write("\n\n\n")
@@ -75,7 +73,7 @@ class Report:
         file.write("Sub-domains for ics.uci.edu:\n")
         for dom, freq in domains:
             if type(dom) is bytes:
-                dom = dom.decode()
+                dom = dom.decode('utf-8')
             file.write("\t" + str(i) + ") " + str(dom) + " -> " + str(freq) + "\n")
             i += 1
 
